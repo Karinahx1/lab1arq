@@ -39,6 +39,22 @@ public class CustomerController {
         return ResponseEntity.ok(customerFacade.createCustomer(customerDTO));
     }
 
+    //Actualizar un cliente existente
+    @PutMapping("/{id}")
+    public ResponseEntity<CustomerDTO> updateCustomer(@PathVariable Long id, @RequestBody CustomerDTO customerDTO) {
+        if(customerDTO.getBalance()==null){
+            throw new IllegalArgumentException("Balance cannot be null");
+        }
+
+        return ResponseEntity.ok(customerFacade.updateCustomer(id, customerDTO));
+    }
+
+    //Eliminar un cliente
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCustomer(@PathVariable Long id) {
+        customerFacade.deleteCustomer(id);
+        return ResponseEntity.noContent().build();
+    }
 
 }
 

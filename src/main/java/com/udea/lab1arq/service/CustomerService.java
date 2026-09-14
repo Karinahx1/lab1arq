@@ -37,7 +37,23 @@ public class CustomerService {
         return customerMapper.toDTO(customerRepository.save(customer));
     }
 
+    public CustomerDTO updateCustomer(Long id, CustomerDTO customerDTO){
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
 
+        customer.setFirstName(customerDTO.getFirstName());
+        customer.setLastName(customerDTO.getLastName());
+        customer.setAccountNumber(customerDTO.getAccountNumber());
+        customer.setBalance(customerDTO.getBalance());
 
+        return customerMapper.toDTO(customerRepository.save(customer));
+    }
+
+    public void deleteCustomer(Long id){
+        if (!customerRepository.existsById(id)) {
+            throw new RuntimeException("Customer not found");
+        }
+        customerRepository.deleteById(id);
+    }
 
 }

@@ -57,6 +57,19 @@ export function createCustomer(customer) {
   });
 }
 
+export function updateCustomer(id, customer) {
+  return request(`/customers/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(customer),
+  });
+}
+
+export function deleteCustomer(id) {
+  return request(`/customers/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+}
+
 export function transferMoney(transfer) {
   return request('/transactions', {
     method: 'POST',
