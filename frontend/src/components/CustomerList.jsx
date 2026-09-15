@@ -124,7 +124,7 @@ export default function CustomerList() {
       <div className="view-header">
         <div>
           <h2>Clientes</h2>
-          <p>Todos los clientes registrados en Aurelia Banco y su saldo actual.</p>
+          <p>Todos los clientes registrados en UdeA Bank y su saldo actual.</p>
         </div>
         <button type="button" className="btn btn-secondary" onClick={loadCustomers} disabled={loading}>
           {loading && <span className="spinner spinner-muted" aria-hidden="true" />}

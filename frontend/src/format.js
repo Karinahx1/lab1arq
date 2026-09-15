@@ -9,6 +9,13 @@ export function formatCOP(value) {
   return currencyFormatter.format(Number.isFinite(number) ? number : 0);
 }
 
+const thousandsFormatter = new Intl.NumberFormat('es-CO');
+
+export function formatThousands(digits) {
+  if (!digits) return '';
+  return thousandsFormatter.format(Number(digits));
+}
+
 export function formatDateTime(value) {
   if (!value) return '—';
   const date = new Date(value);

@@ -2,6 +2,15 @@ import { useEffect, useState } from 'react';
 import { getCustomers, getTransactionsByAccount } from '../api.js';
 import { formatCOP, formatDateTime } from '../format.js';
 
+function ArrowIcon({ direction }) {
+  const d = direction === 'in' ? 'M12 4v13m0 0l-5-5m5 5l5-5' : 'M12 20V7m0 0l-5 5m5-5l5 5';
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+      <path d={d} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export default function TransactionHistory() {
   const [customers, setCustomers] = useState([]);
   const [loadingCustomers, setLoadingCustomers] = useState(true);
@@ -25,6 +34,11 @@ export default function TransactionHistory() {
     })();
   }, []);
 
+  function counterpartyName(accountNumber) {
+    const match = customers.find((c) => c.accountNumber === accountNumber);
+    return match ? `${match.firstName} ${match.lastName}` : accountNumber;
+  }
+
   async function handleSearch(event) {
     event.preventDefault();
     if (!selectedAccount) {
@@ -47,6 +61,13 @@ export default function TransactionHistory() {
       setLoadingHistory(false);
     }
   }
+
+  const totalIn = transactions
+    .filter((t) => t.receiverAccountNumber === selectedAccount)
+    .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+  const totalOut = transactions
+    .filter((t) => t.senderAccountNumber === selectedAccount)
+    .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
   return (
     <>
@@ -95,39 +116,54 @@ export default function TransactionHistory() {
         ) : transactions.length === 0 ? (
           <div className="empty-state">Esta cuenta todavía no tiene movimientos registrados.</div>
         ) : (
-          <div className="table-wrap">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Tipo</th>
-                  <th>Contraparte</th>
-                  <th>Monto</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map((t) => {
-                  const isOutgoing = t.senderAccountNumber === selectedAccount;
-                  const counterparty = isOutgoing ? t.receiverAccountNumber : t.senderAccountNumber;
-                  return (
-                    <tr key={t.id}>
-                      <td>{formatDateTime(t.timestamp)}</td>
-                      <td>
-                        <span className={`badge ${isOutgoing ? 'badge-out' : 'badge-in'}`}>
-                          {isOutgoing ? 'Salida' : 'Entrada'}
-                        </span>
-                      </td>
-                      <td className="mono">{counterparty}</td>
-                      <td className={`amount ${isOutgoing ? 'amount-out' : 'amount-in'}`}>
-                        {isOutgoing ? '-' : '+'}
-                        {formatCOP(t.amount)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className="summary-grid">
+              <div className="summary-card">
+                <div className="summary-label">Movimientos</div>
+                <div className="summary-value mono">{transactions.length}</div>
+              </div>
+              <div className="summary-card">
+                <div className="summary-label">Total recibido</div>
+                <div className="summary-value mono summary-value-in">{formatCOP(totalIn)}</div>
+              </div>
+              <div className="summary-card">
+                <div className="summary-label">Total enviado</div>
+                <div className="summary-value mono summary-value-out">{formatCOP(totalOut)}</div>
+              </div>
+            </div>
+
+            <div className="tx-list">
+              {transactions.map((t) => {
+                const isIncoming = t.receiverAccountNumber === selectedAccount;
+                const counterpartyAccount = isIncoming ? t.senderAccountNumber : t.receiverAccountNumber;
+                const hasTimestamp = Boolean(t.timestamp);
+                const iconTone = !hasTimestamp ? 'neutral' : isIncoming ? 'in' : 'out';
+                const amountTone = isIncoming ? 'in' : 'out';
+
+                return (
+                  <div className="tx-row" key={t.id}>
+                    <div className={`tx-icon tx-icon-${iconTone}`}>
+                      <ArrowIcon direction={isIncoming ? 'in' : 'out'} />
+                    </div>
+                    <div className="tx-main">
+                      <div className="tx-desc">
+                        {isIncoming ? `Recibido de ${counterpartyName(counterpartyAccount)}` : `Enviado a ${counterpartyName(counterpartyAccount)}`}
+                      </div>
+                      <div className="tx-meta">
+                        <span className="mono">{counterpartyAccount}</span>
+                        {' · '}
+                        {hasTimestamp ? formatDateTime(t.timestamp) : 'fecha no registrada'}
+                      </div>
+                    </div>
+                    <div className={`amount tx-amount amount-${amountTone}`}>
+                      {isIncoming ? '+' : '−'}
+                      {formatCOP(t.amount)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </section>
     </>

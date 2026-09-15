@@ -20,11 +20,8 @@ export default function App() {
     <div className="app-shell">
       <header className="app-header">
         <div className="brand">
-          <span className="brand-mark">A</span>
-          <div>
-            <div className="brand-name">Aurelia Banco</div>
-            <div className="brand-subtitle">Arquitectura de Software · Laboratorio 1</div>
-          </div>
+          <span className="brand-mark">U</span>
+          <div className="brand-name">UdeA Bank</div>
         </div>
         <nav className="app-nav">
           {VIEWS.map((view) => (
@@ -43,10 +40,6 @@ export default function App() {
       <main className="app-main">
         <Component />
       </main>
-
-      <footer className="app-footer">
-        Aurelia Banco · Proyecto académico UdeA · Datos de prueba únicamente
-      </footer>
     </div>
   );
 }
