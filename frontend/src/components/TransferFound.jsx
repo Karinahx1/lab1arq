@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getCustomers, transferMoney } from '../api.js';
-import { formatCOP, formatThousands } from '../format.js';
+import { formatCOP } from '../format.js';
+import { useCurrencyInput } from '../useCurrencyInput.js';
 
 const EMPTY_FORM = {
   senderAccountNumber: '',
@@ -32,9 +33,6 @@ export default function TransferFound() {
   const [apiError, setApiError] = useState('');
   const [success, setSuccess] = useState(null);
 
-  const amountInputRef = useRef(null);
-  const pendingCaretDigits = useRef(null);
-
   async function loadCustomers() {
     setLoadingCustomers(true);
     try {
@@ -60,40 +58,10 @@ export default function TransferFound() {
     };
   }
 
-  function handleAmountChange(event) {
-    const input = event.target;
-    const caretPos = input.selectionStart ?? input.value.length;
-    const digitsBeforeCaret = input.value.slice(0, caretPos).replace(/\D/g, '').length;
-    const digits = input.value.replace(/\D/g, '');
-
-    pendingCaretDigits.current = digitsBeforeCaret;
+  const amountInput = useCurrencyInput(form.amount, (digits) => {
     setForm((prev) => ({ ...prev, amount: digits }));
     setFieldErrors((prev) => ({ ...prev, amount: '' }));
-  }
-
-  // Tras reformatear el monto con separadores de miles, el cursor vuelve a
-  // colocarse después de la misma cantidad de dígitos que tenía antes de
-  // reformatear (los puntos de miles no cuentan), en vez de saltar al final.
-  useEffect(() => {
-    if (pendingCaretDigits.current === null || !amountInputRef.current) return;
-    const formatted = formatThousands(form.amount);
-    const targetDigits = pendingCaretDigits.current;
-    let digitsSeen = 0;
-    let caretPos = formatted.length;
-    if (targetDigits === 0) {
-      caretPos = 0;
-    } else {
-      for (let i = 0; i < formatted.length; i += 1) {
-        if (/\d/.test(formatted[i])) digitsSeen += 1;
-        if (digitsSeen === targetDigits) {
-          caretPos = i + 1;
-          break;
-        }
-      }
-    }
-    amountInputRef.current.setSelectionRange(caretPos, caretPos);
-    pendingCaretDigits.current = null;
-  }, [form.amount]);
+  });
 
   const selectedSender = customers.find((c) => c.accountNumber === form.senderAccountNumber);
 
@@ -134,8 +102,7 @@ export default function TransferFound() {
       });
       const refreshed = await loadCustomers();
       const updatedSender = refreshed?.find((c) => c.accountNumber === result.senderAccountNumber);
-      const updatedReceiver = refreshed?.find((c) => c.accountNumber === result.receiverAccountNumber);
-      setSuccess({ ...result, updatedSender, updatedReceiver });
+      setSuccess({ ...result, updatedSender });
       setForm(EMPTY_FORM);
     } catch (err) {
       const message = err.message || 'No se pudo realizar la transferencia.';
@@ -163,17 +130,11 @@ export default function TransferFound() {
         {apiError && <div className="alert alert-error">{apiError}</div>}
         {success && (
           <div className="alert alert-success">
-            Transferencia exitosa de <span className="mono">{formatCOP(success.amount)}</span> desde{' '}
-            <span className="mono">{success.senderAccountNumber}</span> hacia{' '}
+            Transferencia exitosa de <span className="mono">{formatCOP(success.amount)}</span> hacia{' '}
             <span className="mono">{success.receiverAccountNumber}</span>.
             {success.updatedSender && (
               <>
                 {' '}Nuevo saldo origen: <span className="mono">{formatCOP(success.updatedSender.balance)}</span>.
-              </>
-            )}
-            {success.updatedReceiver && (
-              <>
-                {' '}Nuevo saldo destino: <span className="mono">{formatCOP(success.updatedReceiver.balance)}</span>.
               </>
             )}
           </div>
@@ -227,12 +188,12 @@ export default function TransferFound() {
                 <span className="prefixed-input-symbol">$</span>
                 <input
                   id="amount"
-                  ref={amountInputRef}
+                  ref={amountInput.inputRef}
                   type="text"
                   inputMode="numeric"
                   className="mono"
-                  value={formatThousands(form.amount)}
-                  onChange={handleAmountChange}
+                  value={amountInput.displayValue}
+                  onChange={amountInput.handleChange}
                   placeholder="0"
                 />
               </div>

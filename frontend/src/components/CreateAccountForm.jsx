@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { createCustomer } from '../api.js';
+import { useCurrencyInput } from '../useCurrencyInput.js';
 
 const EMPTY_FORM = {
   firstName: '',
@@ -17,6 +18,10 @@ export default function CreateAccountForm() {
   function handleChange(field) {
     return (event) => setForm((prev) => ({ ...prev, [field]: event.target.value }));
   }
+
+  const balanceInput = useCurrencyInput(form.balance, (digits) =>
+    setForm((prev) => ({ ...prev, balance: digits }))
+  );
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -102,16 +107,19 @@ export default function CreateAccountForm() {
             </div>
             <div className="field">
               <label htmlFor="balance">Saldo inicial (COP)</label>
-              <input
-                id="balance"
-                type="number"
-                min="0"
-                step="1000"
-                className="mono"
-                value={form.balance}
-                onChange={handleChange('balance')}
-                placeholder="Ej. 500000"
-              />
+              <div className="prefixed-input">
+                <span className="prefixed-input-symbol">$</span>
+                <input
+                  id="balance"
+                  ref={balanceInput.inputRef}
+                  type="text"
+                  inputMode="numeric"
+                  className="mono"
+                  value={balanceInput.displayValue}
+                  onChange={balanceInput.handleChange}
+                  placeholder="0"
+                />
+              </div>
             </div>
           </div>
           <div className="form-actions">
